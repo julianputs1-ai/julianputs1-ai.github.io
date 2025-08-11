@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PC Inventory & Sales Manager (Standalone)</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#60a5fa;--accent-2:#7c3aed}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Arial;background:linear-gradient(180deg,#061022 0%, #071225 60%);color:#e6eef6}
+    .wrap{max-width:1100px;margin:28px auto;padding:20px}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    header h1{font-size:20px;margin:0}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    .card{background:rgba(255,255,255,0.03);padding:14px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input,select,button{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+    button{cursor:pointer}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:8px;text-align:left;border-bottom:1px dashed rgba(255,255,255,0.03);font-size:13px}
+    .muted{color:var(--muted);font-size:13px}
+    .row{display:flex;gap:8px;align-items:center}
+    .small{font-size:12px;padding:6px}
+    .pill{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:999px}
+    .totals{display:flex;flex-direction:column;gap:8px}
+    .big{font-weight:700;font-size:18px}
+    .green{color:#86efac}
+    .red{color:#fda4af}
+    .select-list{height:120px;overflow:auto;border:1px solid rgba(255,255,255,0.03);padding:6px;border-radius:8px}
+    .component-row{display:flex;align-items:center;gap:8px}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04)}
+    .flex{display:flex;gap:8px}
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700">PC</div>
+      <div>
+        <h1>PC Inventory & Sales Manager — Standalone HTML</h1>
+        <div class="muted">Manage components, combos, PC builds, sales and profits — stored in your browser (localStorage).</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <main class="card">
+        <!-- Add Component -->
+        <section>
+          <h3>Add / Purchase Component</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+            <div style="flex:1">
+              <label>Component name</label>
+              <input id="comp-name" placeholder="e.g. RTX 4070" />
+            </div>
+            <div style="width:140px">
+              <label>Unit cost (€)</label>
+              <input id="comp-cost" type="number" step="0.01" />
+            </div>
+            <div style="width:120px">
+              <label>Quantity</label>
+              <input id="comp-qty" type="number" step="1" value="1" />
+            </div>
+            <div style="width:120px">
+              <label>On hand?</label>
+              <select id="comp-onhand"><option value="true">Yes</option><option value="false">No</option></select>
+            </div>
+            <div><button id="add-comp" class="small">Add / Purchase</button></div>
+          </div>
+        </section>
+
+        <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)" />
+
+        <!-- Add Combo -->
+        <section>
+          <h3>Create Combo Deal</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div style="flex:1">
+              <label>Combo name</label>
+              <input id="combo-name" placeholder="e.g. Gaming Starter Pack" />
+            </div>
+            <div style="width:140px">
+              <label>Combo price (€)</label>
+              <input id="combo-price" type="number" step="0.01" />
+            </div>
+            <div><button id="add-combo" class="small">Create Combo</button></div>
+          </div>
+          <div style="margin-top:8px">
+            <label class="muted">Select components and qty for the combo (click to add)</label>
+            <div id="combo-components" class="select-list"></div>
+          </div>
+        </section>
+
+        <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)" />
+
+        <!-- Build PC -->
+        <section>
+          <h3>Build PC from Components</h3>
+          <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
+            <div style="flex:1">
+              <label>PC name</label>
+              <input id="pc-name" placeholder="e.g. John's Gaming Rig" />
+            </div>
+            <div><button id="open-pc-builder" class="small">Open Builder</button></div>
+          </div>
+          <div id="pc-builder-area" style="margin-top:8px;display:none">
+            <label class="muted">Select components and qty for this PC (click to add)</label>
+            <div id="pc-components" class="select-list"></div>
+            <div style="margin-top:8px"><button id="build-pc" class="small">Build PC</button></div>
+          </div>
+        </section>
+
+        <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)" />
+
+        <!-- Sell Item -->
+        <section>
+          <h3>Record Sale (Component / PC / Combo)</h3>
+          <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
+            <div style="width:140px">
+              <label>Type</label>
+              <select id="sale-type"><option value="component">Component</option><option value="pc">PC</option><option value="combo">Combo</option></select>
+            </div>
+            <div style="flex:1">
+              <label id="sale-item-label">Item</label>
+              <select id="sale-item"></select>
+            </div>
+            <div style="width:120px">
+              <label>Quantity</label>
+              <input id="sale-qty" type="number" step="1" value="1" />
+            </div>
+            <div style="width:140px">
+              <label>Sale price each (€)</label>
+              <input id="sale-price" type="number" step="0.01" />
+            </div>
+            <div><button id="record-sale" class="small">Record Sale</button></div>
+          </div>
+        </section>
+
+      </main>
+
+      <aside>
+        <div class="card totals">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="muted">Totals</div>
+            <div class="pill">Stored locally</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+            <div><div class="muted">Stock value on hand</div><div id="total-stock" class="big green">€0.00</div></div>
+            <div><div class="muted">Total spent on purchases</div><div id="total-spent" class="big">€0.00</div></div>
+            <div><div class="muted">Total revenue (sales)</div><div id="total-revenue" class="big">€0.00</div></div>
+            <div><div class="muted">Total profit</div><div id="total-profit" class="big">€0.00</div></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Components</h3>
+          <div class="muted">Click a component to toggle selection for combos / builds.</div>
+          <div style="max-height:240px;overflow:auto;margin-top:8px">
+            <table id="comps-table"><thead><tr><th>Name</th><th>Unit cost</th><th>On hand</th><th>Qty</th><th></th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Built PCs</h3>
+          <table id="pcs-table"><thead><tr><th>Name</th><th>Cost</th><th>Qty</th></tr></thead><tbody></tbody></table>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Combos</h3>
+          <table id="combos-table"><thead><tr><th>Name</th><th>Price</th><th></th></tr></thead><tbody></tbody></table>
+        </div>
+
+      </aside>
+    </div>
+
+    <hr style="margin:18px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)" />
+
+    <div class="card">
+      <h3>Activity & Records</h3>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1">
+          <h4>Purchases</h4>
+          <table id="purchases-table"><thead><tr><th>Date</th><th>Item</th><th>Qty</th><th>Total cost</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div style="flex:1">
+          <h4>Sales</h4>
+          <table id="sales-table"><thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Qty</th><th>Revenue</th><th>Profit</th></tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <footer>Tip: This file stores data in your browser. To reset, clear site data for this page.</footer>
+  </div>
+
+<script>
+// Simple standalone inventory manager using localStorage
+const STORAGE_KEY = 'pc_inv_v1'
+
+function id(){return Math.random().toString(36).slice(2,9)}
+
+let state = {components:[],combos:[],pcs:[],purchases:[],sales:[]}
+
+function save(){localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); renderAll()}
+function load(){const raw = localStorage.getItem(STORAGE_KEY); if(raw){state = JSON.parse(raw)} renderAll()}
+
+// Utilities
+function money(n){return '€'+Number(n||0).toFixed(2)}
+function findComp(id){return state.components.find(c=>c.id===id)}
+
+// Renderers
+function renderComponents(){
+  const tbody = document.querySelector('#comps-table tbody'); tbody.innerHTML=''
+  const list = document.getElementById('combo-components'); list.innerHTML=''
+  const pcList = document.getElementById('pc-components'); pcList.innerHTML=''
+  state.components.forEach(c=>{
+    const tr = document.createElement('tr')
+    tr.innerHTML = `<td>${c.name}</td><td class="muted">${money(c.unitCost)}</td><td>${c.onHand? 'Yes' : 'No'}</td><td>${c.qtyOnHand}</td><td><button class="small btn-ghost" data-id="${c.id}" data-act="toggle">Toggle onHand</button></td>`
+    tbody.appendChild(tr)
+
+    // combo component row
+    const div = document.createElement('div'); div.className='component-row'
+    div.innerHTML = `<div style="flex:1">${c.name} <span class="muted">(${money(c.unitCost)})</span></div><div style="width:80px"><input data-comp="${c.id}" class="combo-qty small" type="number" min="0" value="0" /></div>`
+    list.appendChild(div)
+
+    // pc builder row
+    const div2 = document.createElement('div'); div2.className='component-row'
+    div2.innerHTML = `<div style="flex:1">${c.name} <span class="muted">(${money(c.unitCost)})</span></div><div style="width:80px"><input data-comp="${c.id}" class="pc-qty small" type="number" min="0" value="0" /></div>`
+    pcList.appendChild(div2)
+  })
+}
+
+function renderCombos(){
+  const tbody = document.querySelector('#combos-table tbody'); tbody.innerHTML=''
+  state.combos.forEach(cb=>{
+    const tr = document.createElement('tr')
+    const items = cb.items.map(i=>{
+      const comp = findComp(i.compId)
+      return comp? `${comp.name} x${i.qty}` : `Unknown x${i.qty}`
+    }).join(', ')
+    tr.innerHTML = `<td>${cb.name}<div class="muted" style="font-size:12px">${items}</div></td><td>${money(cb.price)}</td><td><button class="small btn-ghost" data-id="${cb.id}" data-act="sell-combo">Sell</button></td>`
+    tbody.appendChild(tr)
+  })
+}
+
+function renderPCs(){
+  const tbody = document.querySelector('#pcs-table tbody'); tbody.innerHTML=''
+  state.pcs.forEach(pc=>{
+    const tr = document.createElement('tr')
+    tr.innerHTML = `<td>${pc.name}</td><td class="muted">${money(pc.cost)}</td><td>${pc.qty}</td>`
+    tbody.appendChild(tr)
+  })
+}
+
+function renderTotals(){
+  // stock value = components onhand + pcs
+  let stock = 0
+  state.components.forEach(c=>{ stock += c.qtyOnHand * c.unitCost })
+  state.pcs.forEach(p=>{ stock += p.qty * p.cost })
+  const totalSpent = state.purchases.reduce((s,p)=>s + p.totalCost,0)
+  const totalRevenue = state.sales.reduce((s,p)=>s + p.revenue,0)
+  const totalProfit = state.sales.reduce((s,p)=>s + p.profit,0)
+
+  document.getElementById('total-stock').textContent = money(stock)
+  document.getElementById('total-spent').textContent = money(totalSpent)
+  document.getElementById('total-revenue').textContent = money(totalRevenue)
+  document.getElementById('total-profit').textContent = money(totalProfit)
+}
+
+function renderTables(){
+  // purchases
+  const pt = document.querySelector('#purchases-table tbody'); pt.innerHTML=''
+  state.purchases.slice().reverse().forEach(p=>{
+    const tr = document.createElement('tr')
+    tr.innerHTML = `<td>${new Date(p.date).toLocaleString()}</td><td>${p.itemName}</td><td>${p.qty}</td><td>${money(p.totalCost)}</td>`
+    pt.appendChild(tr)
+  })
+  // sales
+  const st = document.querySelector('#sales-table tbody'); st.innerHTML=''
+  state.sales.slice().reverse().forEach(s=>{
+    const tr = document.createElement('tr')
+    tr.innerHTML = `<td>${new Date(s.date).toLocaleString()}</td><td>${s.type}</td><td>${s.itemName}</td><td>${s.qty}</td><td>${money(s.revenue)}</td><td>${money(s.profit)}</td>`
+    st.appendChild(tr)
+  })
+}
+
+function populateSaleItemSelect(){
+  const sel = document.getElementById('sale-item'); sel.innerHTML=''
+  const type = document.getElementById('sale-type').value
+  if(type==='component'){
+    state.components.forEach(c=>{
+      const opt = document.createElement('option'); opt.value=c.id; opt.textContent=`${c.name} (onHand:${c.qtyOnHand})`; sel.appendChild(opt)
+    })
+  } else if(type==='pc'){
+    state.pcs.forEach(p=>{ const opt=document.createElement('option'); opt.value=p.id; opt.textContent=`${p.name} (onHand:${p.qty})`; sel.appendChild(opt) })
+  } else {
+    state.combos.forEach(cb=>{ const opt=document.createElement('option'); opt.value=cb.id; opt.textContent=`${cb.name}`; sel.appendChild(opt) })
+  }
+}
+
+function renderAll(){ renderComponents(); renderCombos(); renderPCs(); renderTotals(); renderTables(); populateSaleItemSelect() }
+
+// Actions
+
+// add component / purchase
+document.getElementById('add-comp').addEventListener('click', ()=>{
+  const name = document.getElementById('comp-name').value.trim();
+  const cost = parseFloat(document.getElementById('comp-cost').value) || 0
+  const qty = parseInt(document.getElementById('comp-qty').value) || 0
+  const onHand = document.getElementById('comp-onhand').value === 'true'
+  if(!name || cost<=0 || qty<=0){alert('Please provide name, unit cost and quantity (>0).'); return}
+
+  // If component exists with same name, treat as purchase
+  let comp = state.components.find(c=>c.name.toLowerCase()===name.toLowerCase())
+  if(comp){
+    // update average cost (weighted)
+    const prevTotal = comp.unitCost * comp.totalPurchased
+    const newTotal = prevTotal + cost * qty
+    comp.totalPurchased += qty
+    comp.unitCost = (newTotal / comp.totalPurchased)
+    comp.qtyOnHand += onHand? qty:0
+  } else {
+    comp = {id:id(),name,unitCost:cost,qtyOnHand: onHand? qty:0, totalPurchased: qty, onHand: onHand}
+    state.components.push(comp)
+  }
+  // record purchase
+  state.purchases.push({id:id(),date:Date.now(),itemName:name,qty:qty,totalCost: cost*qty})
+  save();
+  // clear inputs
+  document.getElementById('comp-name').value = ''
+  document.getElementById('comp-cost').value = ''
+  document.getElementById('comp-qty').value = '1'
+})
+
+// create combo
+document.getElementById('add-combo').addEventListener('click', ()=>{
+  const name = document.getElementById('combo-name').value.trim();
+  const price = parseFloat(document.getElementById('combo-price').value)||0
+  if(!name || price<=0){alert('Please provide combo name and price'); return}
+  // collect selected component qtys
+  const items = []
+  document.querySelectorAll('#combo-components .combo-qty').forEach(inp=>{
+    const q = parseInt(inp.value) || 0
+    if(q>0) items.push({compId: inp.getAttribute('data-comp'), qty:q})
+  })
+  if(items.length===0){alert('Add at least one component to the combo'); return}
+  const cb = {id:id(),name,price,items}
+  state.combos.push(cb); save(); document.getElementById('combo-name').value=''; document.getElementById('combo-price').value=''
+})
+
+// toggle onHand per component
+document.querySelector('#comps-table tbody').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button')
+  if(!btn) return
+  const idd = btn.getAttribute('data-id'); const act = btn.getAttribute('data-act')
+  if(act==='toggle'){
+    const comp = findComp(idd); if(!comp) return; comp.onHand = !comp.onHand; if(!comp.onHand) comp.qtyOnHand = 0; save()
+  }
+})
+
+// open pc builder
+document.getElementById('open-pc-builder').addEventListener('click', ()=>{
+  const area = document.getElementById('pc-builder-area'); area.style.display = area.style.display==='none'? 'block':'none'
+})
+
+// build pc
+document.getElementById('build-pc').addEventListener('click', ()=>{
+  const name = document.getElementById('pc-name').value.trim() || 'Custom PC'
+  // collect components
+  const use = []
+  document.querySelectorAll('#pc-components .pc-qty').forEach(inp=>{
+    const q = parseInt(inp.value)||0; if(q>0) use.push({compId: inp.getAttribute('data-comp'), qty:q})
+  })
+  if(use.length===0){alert('Select at least one component'); return}
+  // check availability
+  for(const u of use){ const c = findComp(u.compId); if(!c){alert('Component missing'); return} if(c.qtyOnHand < u.qty){alert(`Not enough ${c.name} on hand (need ${u.qty}, have ${c.qtyOnHand})`); return} }
+  // consume components and compute cost
+  let cost = 0
+  for(const u of use){ const c = findComp(u.compId); c.qtyOnHand -= u.qty; cost += c.unitCost * u.qty }
+  // add PC entry
+  let pc = {id:id(),name,cost,qty:1,components:use}
+  state.pcs.push(pc)
+  save();
+  document.getElementById('pc-name').value=''
+  document.getElementById('pc-builder-area').style.display='none'
+})
+
+// sale type change
+document.getElementById('sale-type').addEventListener('change', populateSaleItemSelect)
+
+// record sale
+document.getElementById('record-sale').addEventListener('click', ()=>{
+  const type = document.getElementById('sale-type').value
+  const itemId = document.getElementById('sale-item').value
+  const qty = parseInt(document.getElementById('sale-qty').value) || 0
+  const priceEach = parseFloat(document.getElementById('sale-price').value) || 0
+  if(!itemId || qty<=0 || priceEach<=0){alert('Select an item, quantity and sale price'); return}
+
+  if(type==='component'){
+    const comp = findComp(itemId)
+    if(!comp){alert('Component not found'); return}
+    if(comp.qtyOnHand < qty){alert('Not enough stock to sell'); return}
+    const revenue = qty * priceEach
+    const costBasis = qty * comp.unitCost
+    const profit = revenue - costBasis
+    comp.qtyOnHand -= qty
+    state.sales.push({id:id(),date:Date.now(),type:'component',itemName:comp.name,qty,revenue,profit})
+    save();
+  } else if(type==='pc'){
+    const pc = state.pcs.find(p=>p.id===itemId)
+    if(!pc){alert('PC not found'); return}
+    if(pc.qty < qty){alert('Not enough PC stock'); return}
+    const revenue = qty * priceEach
+    const costBasis = qty * pc.cost
+    const profit = revenue - costBasis
+    pc.qty -= qty
+    state.sales.push({id:id(),date:Date.now(),type:'pc',itemName:pc.name,qty,revenue,profit})
+    save();
+  } else if(type==='combo'){
+    const cb = state.combos.find(c=>c.id===itemId)
+    if(!cb){alert('Combo not found'); return}
+    // check component availability
+    for(const it of cb.items){ const c = findComp(it.compId); if(!c || c.qtyOnHand < it.qty*qty){alert('Not enough components for combo'); return} }
+    let costBasis = 0
+    for(const it of cb.items){ const c = findComp(it.compId); c.qtyOnHand -= it.qty*qty; costBasis += c.unitCost * it.qty*qty }
+    const revenue = qty * priceEach
+    const profit = revenue - costBasis
+    state.sales.push({id:id(),date:Date.now(),type:'combo',itemName:cb.name,qty,revenue,profit})
+    save();
+  }
+  // clear sale inputs
+  document.getElementById('sale-qty').value='1'; document.getElementById('sale-price').value=''
+})
+
+// sell combo quick action in combos table
+document.querySelector('#combos-table tbody').addEventListener('click',(e)=>{
+  const btn = e.target.closest('button'); if(!btn) return
+  const idd = btn.getAttribute('data-id'); const act = btn.getAttribute('data-act')
+  if(act==='sell-combo'){
+    const cb = state.combos.find(c=>c.id===idd)
+    if(!cb) return; const price = cb.price
+    // quick sell 1 at combo price
+    // check availability
+    for(const it of cb.items){ const c = findComp(it.compId); if(!c || c.qtyOnHand < it.qty){alert('Not enough components for combo'); return} }
+    let costBasis=0
+    for(const it of cb.items){ const c=findComp(it.compId); c.qtyOnHand -= it.qty; costBasis += c.unitCost * it.qty }
+    const revenue = price
+    const profit = revenue - costBasis
+    state.sales.push({id:id(),date:Date.now(),type:'combo',itemName:cb.name,qty:1,revenue,profit}); save()
+  }
+})
+
+// initial load
+load()
+
+</script>
+</body>
+</html>
