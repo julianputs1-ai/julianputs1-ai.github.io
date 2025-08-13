@@ -1,457 +1,835 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PC Inventory & Sales Manager (Standalone)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PC Builder Inventory Manager</title>
   <style>
-    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#60a5fa;--accent-2:#7c3aed}
-    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Arial;background:linear-gradient(180deg,#061022 0%, #071225 60%);color:#e6eef6}
-    .wrap{max-width:1100px;margin:28px auto;padding:20px}
-    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
-    header h1{font-size:20px;margin:0}
-    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
-    .card{background:rgba(255,255,255,0.03);padding:14px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
-    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-    input,select,button{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
-    button{cursor:pointer}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{padding:8px;text-align:left;border-bottom:1px dashed rgba(255,255,255,0.03);font-size:13px}
-    .muted{color:var(--muted);font-size:13px}
-    .row{display:flex;gap:8px;align-items:center}
-    .small{font-size:12px;padding:6px}
-    .pill{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:999px}
-    .totals{display:flex;flex-direction:column;gap:8px}
-    .big{font-weight:700;font-size:18px}
-    .green{color:#86efac}
-    .red{color:#fda4af}
-    .select-list{height:120px;overflow:auto;border:1px solid rgba(255,255,255,0.03);padding:6px;border-radius:8px}
-    .component-row{display:flex;align-items:center;gap:8px}
-    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04)}
-    .flex{display:flex;gap:8px}
-    footer{margin-top:18px;color:var(--muted);font-size:13px}
-    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    :root {
+      --bg: #0f172a;           /* slate-900 */
+      --panel: #111827;        /* gray-900 */
+      --panel-2: #0b1220;      /* darker variant */
+      --muted: #94a3b8;        /* slate-400 */
+      --text: #e2e8f0;         /* slate-200 */
+      --accent: #22c55e;       /* green-500 */
+      --accent-2: #38bdf8;     /* sky-400 */
+      --warn: #f59e0b;         /* amber-500 */
+      --danger: #ef4444;       /* red-500 */
+      --ring: rgba(56,189,248,.35);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 900px at 10% 0%, #0b1220 0, var(--bg) 65%),
+                  radial-gradient(1200px 900px at 140% 20%, #0b1220 0, transparent 65%);
+      color: var(--text);
+    }
+    a { color: var(--accent-2); text-decoration: none; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 16px; position: sticky; top: 0; z-index: 10; background: rgba(17,24,39,.8); backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(148,163,184,.15);
+    }
+    .brand { font-weight: 800; letter-spacing: .2px; }
+    .nav { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tab-btn {
+      border: 1px solid rgba(148,163,184,.2); color: var(--text); background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
+      padding: 8px 12px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 14px;
+    }
+    .tab-btn.active { border-color: var(--accent-2); box-shadow: 0 0 0 4px var(--ring); }
+
+    .grid {
+      display: grid; gap: 16px; grid-template-columns: repeat(12, 1fr);
+    }
+    .col-12 { grid-column: span 12; }
+    .col-8 { grid-column: span 8; }
+    .col-6 { grid-column: span 6; }
+    .col-4 { grid-column: span 4; }
+    .col-3 { grid-column: span 3; }
+    @media (max-width: 900px) {
+      .col-8, .col-6, .col-4, .col-3 { grid-column: span 12; }
+      header { position: static; }
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border: 1px solid rgba(148,163,184,.2);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .card h3 { margin: 0 0 10px 0; font-size: 18px; }
+
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+    input, select, textarea {
+      width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(148,163,184,.3);
+      background: #0b1220; color: var(--text); outline: none; transition: box-shadow .2s, border-color .2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent-2); box-shadow: 0 0 0 4px var(--ring); }
+    .btn { cursor: pointer; border: 1px solid rgba(148,163,184,.25); padding: 10px 14px; border-radius: 12px; font-weight: 700; }
+    .btn.primary { background: linear-gradient(180deg, #155e75, #0e7490); border-color: #155e75; }
+    .btn.success { background: linear-gradient(180deg, #15803d, #166534); border-color: #15803d; }
+    .btn.warn { background: linear-gradient(180deg, #b45309, #92400e); border-color: #b45309; }
+    .btn.ghost { background: transparent; }
+    .btn.danger { background: linear-gradient(180deg, #991b1b, #7f1d1d); border-color: #991b1b; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid rgba(148,163,184,.15); text-align: left; }
+    th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+    .kpi { padding: 16px; border-radius: 16px; background: linear-gradient(180deg, rgba(56,189,248,.08), rgba(56,189,248,.03)); border: 1px solid rgba(56,189,248,.3); }
+    .kpi .label { color: var(--muted); font-size: 12px; }
+    .kpi .value { font-size: 22px; font-weight: 800; letter-spacing: .3px; }
+
+    .pill { padding: 4px 8px; border-radius: 999px; font-size: 11px; border: 1px solid rgba(148,163,184,.3); }
+    .pill.green { background: rgba(34,197,94,.15); border-color: rgba(34,197,94,.5); }
+    .pill.red { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.5); }
+
+    .badge { font-size: 10px; border: 1px dashed rgba(148,163,184,.5); padding: 2px 6px; border-radius: 8px; color: var(--muted); }
+
+    .footer { color: var(--muted); text-align: center; font-size: 12px; padding: 24px; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700">PC</div>
-      <div>
-        <h1>PC Inventory & Sales Manager — Standalone HTML</h1>
-        <div class="muted">Manage components, combos, PC builds, sales and profits — stored in your browser (localStorage).</div>
-      </div>
-    </header>
+  <header class="container">
+    <div class="brand">🧰 PC Builder Inventory Manager</div>
+    <nav class="nav">
+      <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn" data-tab="items">Items</button>
+      <button class="tab-btn" data-tab="combos">Combo Deals</button>
+      <button class="tab-btn" data-tab="builds">Build PCs</button>
+      <button class="tab-btn" data-tab="sales">Sales</button>
+      <button class="tab-btn" data-tab="analytics">Analytics</button>
+      <button class="tab-btn" data-tab="settings">Settings</button>
+    </nav>
+  </header>
 
-    <div class="grid">
-      <main class="card">
-        <!-- Add Component -->
-        <section>
-          <h3>Add / Purchase Component</h3>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
-            <div style="flex:1">
-              <label>Component name</label>
-              <input id="comp-name" placeholder="e.g. RTX 4070" />
+  <main class="container">
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="tab">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="row" style="justify-content: space-between; align-items: flex-end; gap: 16px;">
+            <div>
+              <h2 style="margin:0 0 6px 0">Overview</h2>
+              <div class="badge">Local-only & Offline — data saved in your browser</div>
             </div>
-            <div style="width:140px">
-              <label>Unit cost (€)</label>
-              <input id="comp-cost" type="number" step="0.01" />
+            <div class="row">
+              <button class="btn" id="exportBtn">Export JSON</button>
+              <label class="btn ghost" for="importFile">Import JSON</label>
+              <input type="file" id="importFile" accept="application/json" style="display:none" />
+              <button class="btn warn" id="seedBtn">Seed Demo Data</button>
+              <button class="btn danger" id="resetBtn">Factory Reset</button>
             </div>
-            <div style="width:120px">
-              <label>Quantity</label>
-              <input id="comp-qty" type="number" step="1" value="1" />
-            </div>
-            <div style="width:120px">
-              <label>On hand?</label>
-              <select id="comp-onhand"><option value="true">Yes</option><option value="false">No</option></select>
-            </div>
-            <div><button id="add-comp" class="small">Add / Purchase</button></div>
-          </div>
-        </section>
-
-        <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)" />
-
-        <!-- Add Combo -->
-        <section>
-          <h3>Create Combo Deal</h3>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <div style="flex:1">
-              <label>Combo name</label>
-              <input id="combo-name" placeholder="e.g. Gaming Starter Pack" />
-            </div>
-            <div style="width:140px">
-              <label>Combo price (€)</label>
-              <input id="combo-price" type="number" step="0.01" />
-            </div>
-            <div><button id="add-combo" class="small">Create Combo</button></div>
-          </div>
-          <div style="margin-top:8px">
-            <label class="muted">Select components and qty for the combo (click to add)</label>
-            <div id="combo-components" class="select-list"></div>
-          </div>
-        </section>
-
-        <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)" />
-
-        <!-- Build PC -->
-        <section>
-          <h3>Build PC from Components</h3>
-          <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
-            <div style="flex:1">
-              <label>PC name</label>
-              <input id="pc-name" placeholder="e.g. John's Gaming Rig" />
-            </div>
-            <div><button id="open-pc-builder" class="small">Open Builder</button></div>
-          </div>
-          <div id="pc-builder-area" style="margin-top:8px;display:none">
-            <label class="muted">Select components and qty for this PC (click to add)</label>
-            <div id="pc-components" class="select-list"></div>
-            <div style="margin-top:8px"><button id="build-pc" class="small">Build PC</button></div>
-          </div>
-        </section>
-
-        <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)" />
-
-        <!-- Sell Item -->
-        <section>
-          <h3>Record Sale (Component / PC / Combo)</h3>
-          <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
-            <div style="width:140px">
-              <label>Type</label>
-              <select id="sale-type"><option value="component">Component</option><option value="pc">PC</option><option value="combo">Combo</option></select>
-            </div>
-            <div style="flex:1">
-              <label id="sale-item-label">Item</label>
-              <select id="sale-item"></select>
-            </div>
-            <div style="width:120px">
-              <label>Quantity</label>
-              <input id="sale-qty" type="number" step="1" value="1" />
-            </div>
-            <div style="width:140px">
-              <label>Sale price each (€)</label>
-              <input id="sale-price" type="number" step="0.01" />
-            </div>
-            <div><button id="record-sale" class="small">Record Sale</button></div>
-          </div>
-        </section>
-
-      </main>
-
-      <aside>
-        <div class="card totals">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div class="muted">Totals</div>
-            <div class="pill">Stored locally</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
-            <div><div class="muted">Stock value on hand</div><div id="total-stock" class="big green">€0.00</div></div>
-            <div><div class="muted">Total spent on purchases</div><div id="total-spent" class="big">€0.00</div></div>
-            <div><div class="muted">Total revenue (sales)</div><div id="total-revenue" class="big">€0.00</div></div>
-            <div><div class="muted">Total profit</div><div id="total-profit" class="big">€0.00</div></div>
           </div>
         </div>
-
-        <div class="card" style="margin-top:12px">
-          <h3>Components</h3>
-          <div class="muted">Click a component to toggle selection for combos / builds.</div>
-          <div style="max-height:240px;overflow:auto;margin-top:8px">
-            <table id="comps-table"><thead><tr><th>Name</th><th>Unit cost</th><th>On hand</th><th>Qty</th><th></th></tr></thead><tbody></tbody></table>
-          </div>
+        <div class="col-12 kpis">
+          <div class="kpi"><div class="label">Total Money Spent</div><div class="value" id="kpiSpent">€0.00</div></div>
+          <div class="kpi"><div class="label">Inventory Value (On Hand)</div><div class="value" id="kpiInventory">€0.00</div></div>
+          <div class="kpi"><div class="label">Total Revenue</div><div class="value" id="kpiRevenue">€0.00</div></div>
+          <div class="kpi"><div class="label">Total Profit</div><div class="value" id="kpiProfit">€0.00</div></div>
         </div>
-
-        <div class="card" style="margin-top:12px">
-          <h3>Built PCs</h3>
-          <table id="pcs-table"><thead><tr><th>Name</th><th>Cost</th><th>Qty</th></tr></thead><tbody></tbody></table>
+        <div class="col-6 card">
+          <h3>Recent Items</h3>
+          <table>
+            <thead><tr><th>Item</th><th>Cat.</th><th>Cost</th><th>Status</th></tr></thead>
+            <tbody id="recentItems"></tbody>
+          </table>
         </div>
-
-        <div class="card" style="margin-top:12px">
-          <h3>Combos</h3>
-          <table id="combos-table"><thead><tr><th>Name</th><th>Price</th><th></th></tr></thead><tbody></tbody></table>
-        </div>
-
-      </aside>
-    </div>
-
-    <hr style="margin:18px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)" />
-
-    <div class="card">
-      <h3>Activity & Records</h3>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <div style="flex:1">
-          <h4>Purchases</h4>
-          <table id="purchases-table"><thead><tr><th>Date</th><th>Item</th><th>Qty</th><th>Total cost</th></tr></thead><tbody></tbody></table>
-        </div>
-        <div style="flex:1">
-          <h4>Sales</h4>
-          <table id="sales-table"><thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Qty</th><th>Revenue</th><th>Profit</th></tr></thead><tbody></tbody></table>
+        <div class="col-6 card">
+          <h3>Recent Builds</h3>
+          <table>
+            <thead><tr><th>Build</th><th>Parts</th><th>Cost</th><th>Status</th></tr></thead>
+            <tbody id="recentBuilds"></tbody>
+          </table>
         </div>
       </div>
-    </div>
+    </section>
 
-    <footer>Tip: This file stores data in your browser. To reset, clear site data for this page.</footer>
-  </div>
+    <!-- ITEMS -->
+    <section id="items" class="tab" hidden>
+      <div class="grid">
+        <div class="col-4 card">
+          <h3>Add Component</h3>
+          <form id="itemForm">
+            <div>
+              <label>Category</label>
+              <select id="itemCategory" required>
+                <option>CPU</option><option>Motherboard</option><option>GPU</option><option>RAM</option>
+                <option>Storage</option><option>PSU</option><option>Case</option><option>Cooler</option><option>Other</option>
+              </select>
+            </div>
+            <div class="row">
+              <div style="flex:1">
+                <label>Brand</label>
+                <input id="itemBrand" placeholder="e.g., AMD" />
+              </div>
+              <div style="flex:1">
+                <label>Model</label>
+                <input id="itemModel" placeholder="e.g., Ryzen 5 5600" />
+              </div>
+            </div>
+            <div class="row">
+              <div style="flex:1">
+                <label>Unit Cost (€)</label>
+                <input id="itemPrice" type="number" step="0.01" min="0" required />
+              </div>
+              <div style="flex:1">
+                <label>Quantity</label>
+                <input id="itemQty" type="number" min="1" value="1" required />
+              </div>
+            </div>
+            <div class="row">
+              <div style="flex:1">
+                <label>Purchased On</label>
+                <input id="itemDate" type="date" />
+              </div>
+              <div style="flex:1">
+                <label>On Hand?</label>
+                <select id="itemOnHand">
+                  <option value="true" selected>Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label>Notes</label>
+              <textarea id="itemNotes" rows="2" placeholder="Condition, seller, marketplace, etc."></textarea>
+            </div>
+            <div class="row" style="justify-content: flex-end;">
+              <button class="btn success" type="submit">Add Item</button>
+            </div>
+          </form>
+        </div>
+        <div class="col-8 card">
+          <div class="row" style="justify-content: space-between;">
+            <h3>Inventory</h3>
+            <div class="row">
+              <input id="itemSearch" placeholder="Search brand/model/category" />
+              <select id="itemFilter">
+                <option value="all">All</option>
+                <option value="on">On Hand</option>
+                <option value="off">Not On Hand</option>
+              </select>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Item</th><th>Category</th><th>Cost</th><th>Purchased</th><th>On Hand</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="itemsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-<script>
-// Simple standalone inventory manager using localStorage
-const STORAGE_KEY = 'pc_inv_v1'
+    <!-- COMBOS -->
+    <section id="combos" class="tab" hidden>
+      <div class="grid">
+        <div class="col-4 card">
+          <h3>Add Combo Deal</h3>
+          <form id="comboForm">
+            <div>
+              <label>Combo Name</label>
+              <input id="comboName" placeholder="e.g., CPU + Motherboard Bundle" required />
+            </div>
+            <div>
+              <label>Total Combo Price (€)</label>
+              <input id="comboPrice" type="number" step="0.01" min="0" required />
+            </div>
+            <div>
+              <label>Purchased On</label>
+              <input id="comboDate" type="date" />
+            </div>
+            <div>
+              <label>Items in Combo</label>
+              <div id="comboItems"></div>
+              <button type="button" class="btn" id="addComboRow">+ Add Combo Item</button>
+            </div>
+            <div class="row" style="justify-content: flex-end;">
+              <button class="btn success" type="submit">Add Combo → Split Evenly</button>
+            </div>
+          </form>
+        </div>
+        <div class="col-8 card">
+          <h3>Combo Deals</h3>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Items Created</th><th>Total Price</th><th>Date</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="combosTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-function id(){return Math.random().toString(36).slice(2,9)}
+    <!-- BUILDS -->
+    <section id="builds" class="tab" hidden>
+      <div class="grid">
+        <div class="col-4 card">
+          <h3>Create PC Build</h3>
+          <form id="buildForm">
+            <div>
+              <label>Build Name</label>
+              <input id="buildName" placeholder="e.g., Budget 5600 + 6650XT" required />
+            </div>
+            <div>
+              <label>Select Components (on-hand only)</label>
+              <div id="buildPicker"></div>
+            </div>
+            <div class="row" style="justify-content: space-between; align-items: center;">
+              <div class="badge">Auto-removes items from On Hand</div>
+              <button class="btn success" type="submit">Save Build</button>
+            </div>
+          </form>
+        </div>
+        <div class="col-8 card">
+          <div class="row" style="justify-content: space-between;">
+            <h3>Builds</h3>
+            <div class="row">
+              <select id="buildFilter"><option value="all">All</option><option value="unsold">Unsold</option><option value="sold">Sold</option></select>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Name</th><th>Parts</th><th>Cost</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="buildsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-let state = {components:[],combos:[],pcs:[],purchases:[],sales:[]}
+    <!-- SALES -->
+    <section id="sales" class="tab" hidden>
+      <div class="grid">
+        <div class="col-12 card">
+          <h3>Sell a Build</h3>
+          <form id="sellForm" class="row">
+            <select id="sellBuild" required></select>
+            <input id="sellPrice" type="number" step="0.01" min="0" placeholder="Sale Price (€)" required />
+            <input id="sellDate" type="date" />
+            <button class="btn primary" type="submit">Mark as Sold</button>
+          </form>
+        </div>
+        <div class="col-12 card">
+          <h3>Sales History</h3>
+          <table>
+            <thead><tr><th>Build</th><th>Sold For</th><th>Cost</th><th>Profit</th><th>Date</th></tr></thead>
+            <tbody id="salesTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-function save(){localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); renderAll()}
-function load(){const raw = localStorage.getItem(STORAGE_KEY); if(raw){state = JSON.parse(raw)} renderAll()}
+    <!-- ANALYTICS -->
+    <section id="analytics" class="tab" hidden>
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="row" style="justify-content: space-between; align-items: center;">
+            <h3>Trends</h3>
+            <div class="row">
+              <select id="chartRange">
+                <option value="6">Last 6 Months</option>
+                <option value="12" selected>Last 12 Months</option>
+                <option value="24">Last 24 Months</option>
+              </select>
+            </div>
+          </div>
+          <canvas id="moneyChart" height="100"></canvas>
+        </div>
+      </div>
+    </section>
 
-// Utilities
-function money(n){return '€'+Number(n||0).toFixed(2)}
-function findComp(id){return state.components.find(c=>c.id===id)}
+    <!-- SETTINGS -->
+    <section id="settings" class="tab" hidden>
+      <div class="grid">
+        <div class="col-12 card">
+          <h3>Settings</h3>
+          <div class="row" style="gap:16px; align-items:flex-end;">
+            <div>
+              <label>Currency Symbol</label>
+              <input id="currencySymbol" value="€" />
+            </div>
+            <div>
+              <label>Locale (Number Format)</label>
+              <input id="localeString" value="nl-NL" />
+            </div>
+            <button class="btn" id="saveSettings">Save</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
-// Renderers
-function renderComponents(){
-  const tbody = document.querySelector('#comps-table tbody'); tbody.innerHTML=''
-  const list = document.getElementById('combo-components'); list.innerHTML=''
-  const pcList = document.getElementById('pc-components'); pcList.innerHTML=''
-  state.components.forEach(c=>{
-    const tr = document.createElement('tr')
-    tr.innerHTML = `<td>${c.name}</td><td class="muted">${money(c.unitCost)}</td><td>${c.onHand? 'Yes' : 'No'}</td><td>${c.qtyOnHand}</td><td><button class="small btn-ghost" data-id="${c.id}" data-act="toggle">Toggle onHand</button></td>`
-    tbody.appendChild(tr)
+    <div class="footer">Made for fast PC flipping & custom builds • Your data lives in your browser (localStorage)</div>
+  </main>
 
-    // combo component row
-    const div = document.createElement('div'); div.className='component-row'
-    div.innerHTML = `<div style="flex:1">${c.name} <span class="muted">(${money(c.unitCost)})</span></div><div style="width:80px"><input data-comp="${c.id}" class="combo-qty small" type="number" min="0" value="0" /></div>`
-    list.appendChild(div)
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // --------------------------
+    // Utilities & Persistence
+    // --------------------------
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-    // pc builder row
-    const div2 = document.createElement('div'); div2.className='component-row'
-    div2.innerHTML = `<div style="flex:1">${c.name} <span class="muted">(${money(c.unitCost)})</span></div><div style="width:80px"><input data-comp="${c.id}" class="pc-qty small" type="number" min="0" value="0" /></div>`
-    pcList.appendChild(div2)
-  })
-}
+    const store = {
+      load() {
+        try {
+          return JSON.parse(localStorage.getItem('pcbm-data')) || { items: [], combos: [], builds: [], sales: [], settings: { currency: '€', locale: 'nl-NL' } };
+        } catch { return { items: [], combos: [], builds: [], sales: [], settings: { currency: '€', locale: 'nl-NL' } }; }
+      },
+      save(data) { localStorage.setItem('pcbm-data', JSON.stringify(data)); },
+      export() { const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='pc_builder_inventory.json'; a.click(); URL.revokeObjectURL(a.href); }
+    };
 
-function renderCombos(){
-  const tbody = document.querySelector('#combos-table tbody'); tbody.innerHTML=''
-  state.combos.forEach(cb=>{
-    const tr = document.createElement('tr')
-    const items = cb.items.map(i=>{
-      const comp = findComp(i.compId)
-      return comp? `${comp.name} x${i.qty}` : `Unknown x${i.qty}`
-    }).join(', ')
-    tr.innerHTML = `<td>${cb.name}<div class="muted" style="font-size:12px">${items}</div></td><td>${money(cb.price)}</td><td><button class="small btn-ghost" data-id="${cb.id}" data-act="sell-combo">Sell</button></td>`
-    tbody.appendChild(tr)
-  })
-}
+    let data = store.load();
 
-function renderPCs(){
-  const tbody = document.querySelector('#pcs-table tbody'); tbody.innerHTML=''
-  state.pcs.forEach(pc=>{
-    const tr = document.createElement('tr')
-    tr.innerHTML = `<td>${pc.name}</td><td class="muted">${money(pc.cost)}</td><td>${pc.qty}</td>`
-    tbody.appendChild(tr)
-  })
-}
+    const fmt = (n) => new Intl.NumberFormat(data.settings?.locale||'nl-NL', { style:'currency', currency: (data.settings?.currency||'€').includes('$')?'USD':((data.settings?.currency||'€')==='€'?'EUR':'EUR'), currencyDisplay: 'narrowSymbol' }).format(n).replace('€', data.settings?.currency||'€');
 
-function renderTotals(){
-  // stock value = components onhand + pcs
-  let stock = 0
-  state.components.forEach(c=>{ stock += c.qtyOnHand * c.unitCost })
-  state.pcs.forEach(p=>{ stock += p.qty * p.cost })
-  const totalSpent = state.purchases.reduce((s,p)=>s + p.totalCost,0)
-  const totalRevenue = state.sales.reduce((s,p)=>s + p.revenue,0)
-  const totalProfit = state.sales.reduce((s,p)=>s + p.profit,0)
+    const uid = () => Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
 
-  document.getElementById('total-stock').textContent = money(stock)
-  document.getElementById('total-spent').textContent = money(totalSpent)
-  document.getElementById('total-revenue').textContent = money(totalRevenue)
-  document.getElementById('total-profit').textContent = money(totalProfit)
-}
+    // Expand quantity into individual units for easy tracking and builds
+    function addItemUnits(base, qty) {
+      for (let i=0;i<qty;i++) {
+        data.items.push({
+          id: uid(),
+          category: base.category,
+          brand: base.brand||'',
+          model: base.model||'',
+          name: `${base.brand||''} ${base.model||''}`.trim() || base.category,
+          price: Number(base.price)||0, // unit cost
+          onHand: base.onHand,
+          date: base.date||new Date().toISOString().slice(0,10),
+          notes: base.notes||'',
+          comboId: base.comboId||null,
+          usedInBuildId: null
+        });
+      }
+    }
 
-function renderTables(){
-  // purchases
-  const pt = document.querySelector('#purchases-table tbody'); pt.innerHTML=''
-  state.purchases.slice().reverse().forEach(p=>{
-    const tr = document.createElement('tr')
-    tr.innerHTML = `<td>${new Date(p.date).toLocaleString()}</td><td>${p.itemName}</td><td>${p.qty}</td><td>${money(p.totalCost)}</td>`
-    pt.appendChild(tr)
-  })
-  // sales
-  const st = document.querySelector('#sales-table tbody'); st.innerHTML=''
-  state.sales.slice().reverse().forEach(s=>{
-    const tr = document.createElement('tr')
-    tr.innerHTML = `<td>${new Date(s.date).toLocaleString()}</td><td>${s.type}</td><td>${s.itemName}</td><td>${s.qty}</td><td>${money(s.revenue)}</td><td>${money(s.profit)}</td>`
-    st.appendChild(tr)
-  })
-}
+    function recalcKPIs() {
+      const totalSpent = data.items.reduce((s,i)=>s+(i.price||0),0);
+      const inventoryValue = data.items.filter(i=>i.onHand && !i.usedInBuildId).reduce((s,i)=>s+i.price,0);
+      const revenue = data.sales.reduce((s,sl)=>s+(sl.salePrice||0),0);
+      const costOfSold = data.sales.reduce((s,sl)=>s+(sl.cost||0),0);
+      const profit = revenue - costOfSold;
+      $('#kpiSpent').textContent = fmt(totalSpent);
+      $('#kpiInventory').textContent = fmt(inventoryValue);
+      $('#kpiRevenue').textContent = fmt(revenue);
+      $('#kpiProfit').textContent = fmt(profit);
+    }
 
-function populateSaleItemSelect(){
-  const sel = document.getElementById('sale-item'); sel.innerHTML=''
-  const type = document.getElementById('sale-type').value
-  if(type==='component'){
-    state.components.forEach(c=>{
-      const opt = document.createElement('option'); opt.value=c.id; opt.textContent=`${c.name} (onHand:${c.qtyOnHand})`; sel.appendChild(opt)
-    })
-  } else if(type==='pc'){
-    state.pcs.forEach(p=>{ const opt=document.createElement('option'); opt.value=p.id; opt.textContent=`${p.name} (onHand:${p.qty})`; sel.appendChild(opt) })
-  } else {
-    state.combos.forEach(cb=>{ const opt=document.createElement('option'); opt.value=cb.id; opt.textContent=`${cb.name}`; sel.appendChild(opt) })
-  }
-}
+    function renderRecent() {
+      // Items
+      const items = [...data.items].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+      $('#recentItems').innerHTML = items.map(i=>`<tr>
+        <td>${escapeHtml(i.name||'-')}</td>
+        <td>${escapeHtml(i.category)}</td>
+        <td>${fmt(i.price)}</td>
+        <td>${i.onHand && !i.usedInBuildId ? '<span class="pill green">On Hand</span>' : '<span class="pill red">Out</span>'}</td>
+      </tr>`).join('')||'<tr><td colspan="4">No items yet</td></tr>';
+      // Builds
+      const builds = [...data.builds].sort((a,b)=> (b.dateBuilt||'').localeCompare(a.dateBuilt||'') ).slice(0,6);
+      $('#recentBuilds').innerHTML = builds.map(b=>`<tr>
+        <td>${escapeHtml(b.name)}</td>
+        <td>${b.parts.length}</td>
+        <td>${fmt(b.cost)}</td>
+        <td>${b.sold ? '<span class="pill red">Sold</span>' : '<span class="pill green">Unsold</span>'}</td>
+      </tr>`).join('')||'<tr><td colspan="4">No builds yet</td></tr>';
+    }
 
-function renderAll(){ renderComponents(); renderCombos(); renderPCs(); renderTotals(); renderTables(); populateSaleItemSelect() }
+    function escapeHtml(str='') { return str.replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m])); }
 
-// Actions
+    // --------------------------
+    // Tabs
+    // --------------------------
+    $$('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{
+      $$('.tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      $$('.tab').forEach(s=>s.hidden = s.id !== tab);
+      if (tab === 'analytics') drawChart();
+    }));
 
-// add component / purchase
-document.getElementById('add-comp').addEventListener('click', ()=>{
-  const name = document.getElementById('comp-name').value.trim();
-  const cost = parseFloat(document.getElementById('comp-cost').value) || 0
-  const qty = parseInt(document.getElementById('comp-qty').value) || 0
-  const onHand = document.getElementById('comp-onhand').value === 'true'
-  if(!name || cost<=0 || qty<=0){alert('Please provide name, unit cost and quantity (>0).'); return}
+    // --------------------------
+    // Items Page
+    // --------------------------
+    $('#itemForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const base = {
+        category: $('#itemCategory').value,
+        brand: $('#itemBrand').value.trim(),
+        model: $('#itemModel').value.trim(),
+        price: parseFloat($('#itemPrice').value||'0'),
+        onHand: $('#itemOnHand').value === 'true',
+        date: $('#itemDate').value || new Date().toISOString().slice(0,10),
+        notes: $('#itemNotes').value.trim(),
+      };
+      const qty = parseInt($('#itemQty').value||'1');
+      addItemUnits(base, qty);
+      store.save(data);
+      $('#itemForm').reset();
+      renderItems(); recalcKPIs(); renderRecent(); refreshBuildPicker();
+    });
 
-  // If component exists with same name, treat as purchase
-  let comp = state.components.find(c=>c.name.toLowerCase()===name.toLowerCase())
-  if(comp){
-    // update average cost (weighted)
-    const prevTotal = comp.unitCost * comp.totalPurchased
-    const newTotal = prevTotal + cost * qty
-    comp.totalPurchased += qty
-    comp.unitCost = (newTotal / comp.totalPurchased)
-    comp.qtyOnHand += onHand? qty:0
-  } else {
-    comp = {id:id(),name,unitCost:cost,qtyOnHand: onHand? qty:0, totalPurchased: qty, onHand: onHand}
-    state.components.push(comp)
-  }
-  // record purchase
-  state.purchases.push({id:id(),date:Date.now(),itemName:name,qty:qty,totalCost: cost*qty})
-  save();
-  // clear inputs
-  document.getElementById('comp-name').value = ''
-  document.getElementById('comp-cost').value = ''
-  document.getElementById('comp-qty').value = '1'
-})
+    function renderItems() {
+      const q = ($('#itemSearch').value||'').toLowerCase();
+      const f = $('#itemFilter').value;
+      const rows = data.items.filter(i=>{
+        const match = [i.name, i.category, i.brand, i.model].join(' ').toLowerCase().includes(q);
+        const hand = f==='all' ? true : (f==='on' ? (i.onHand && !i.usedInBuildId) : (!i.onHand || !!i.usedInBuildId));
+        return match && hand;
+      }).sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+      $('#itemsTable').innerHTML = rows.map(i=>`<tr>
+        <td>${escapeHtml(i.name)}</td>
+        <td>${escapeHtml(i.category)}</td>
+        <td>${fmt(i.price)}</td>
+        <td>${escapeHtml(i.date||'-')}</td>
+        <td>${i.onHand && !i.usedInBuildId ? '<span class="pill green">Yes</span>' : '<span class="pill red">No</span>'}</td>
+        <td class="row">
+          <button class="btn" onclick="toggleOnHand('${i.id}')">${i.onHand && !i.usedInBuildId ? 'Set Out' : 'Set On'}</button>
+          <button class="btn danger" onclick="deleteItem('${i.id}')">Delete</button>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="6">No items</td></tr>';
+    }
 
-// create combo
-document.getElementById('add-combo').addEventListener('click', ()=>{
-  const name = document.getElementById('combo-name').value.trim();
-  const price = parseFloat(document.getElementById('combo-price').value)||0
-  if(!name || price<=0){alert('Please provide combo name and price'); return}
-  // collect selected component qtys
-  const items = []
-  document.querySelectorAll('#combo-components .combo-qty').forEach(inp=>{
-    const q = parseInt(inp.value) || 0
-    if(q>0) items.push({compId: inp.getAttribute('data-comp'), qty:q})
-  })
-  if(items.length===0){alert('Add at least one component to the combo'); return}
-  const cb = {id:id(),name,price,items}
-  state.combos.push(cb); save(); document.getElementById('combo-name').value=''; document.getElementById('combo-price').value=''
-})
+    function toggleOnHand(id){
+      const it = data.items.find(x=>x.id===id); if(!it) return;
+      if (it.usedInBuildId) { alert('Item is part of a build. Remove it from the build first.'); return; }
+      it.onHand = !it.onHand;
+      store.save(data); renderItems(); recalcKPIs(); refreshBuildPicker();
+    }
+    function deleteItem(id){
+      const it = data.items.find(x=>x.id===id); if(!it) return;
+      if (it.usedInBuildId) { alert('Cannot delete. Item is part of a build.'); return; }
+      data.items = data.items.filter(x=>x.id!==id);
+      store.save(data); renderItems(); recalcKPIs(); refreshBuildPicker(); renderRecent();
+    }
 
-// toggle onHand per component
-document.querySelector('#comps-table tbody').addEventListener('click', (e)=>{
-  const btn = e.target.closest('button')
-  if(!btn) return
-  const idd = btn.getAttribute('data-id'); const act = btn.getAttribute('data-act')
-  if(act==='toggle'){
-    const comp = findComp(idd); if(!comp) return; comp.onHand = !comp.onHand; if(!comp.onHand) comp.qtyOnHand = 0; save()
-  }
-})
+    $('#itemSearch').addEventListener('input', renderItems);
+    $('#itemFilter').addEventListener('change', renderItems);
 
-// open pc builder
-document.getElementById('open-pc-builder').addEventListener('click', ()=>{
-  const area = document.getElementById('pc-builder-area'); area.style.display = area.style.display==='none'? 'block':'none'
-})
+    // --------------------------
+    // Combos Page
+    // --------------------------
+    function comboRowTemplate(){
+      const id = uid();
+      const row = document.createElement('div');
+      row.className='row'; row.style.marginBottom='8px'; row.dataset.id=id;
+      row.innerHTML = `
+        <select class="combo-cat">
+          <option>CPU</option><option>Motherboard</option><option>GPU</option><option>RAM</option>
+          <option>Storage</option><option>PSU</option><option>Case</option><option>Cooler</option><option>Other</option>
+        </select>
+        <input class="combo-brand" placeholder="Brand" style="flex:1" />
+        <input class="combo-model" placeholder="Model" style="flex:1" />
+        <button type="button" class="btn danger" onclick="this.parentElement.remove()">Remove</button>
+      `;
+      return row;
+    }
 
-// build pc
-document.getElementById('build-pc').addEventListener('click', ()=>{
-  const name = document.getElementById('pc-name').value.trim() || 'Custom PC'
-  // collect components
-  const use = []
-  document.querySelectorAll('#pc-components .pc-qty').forEach(inp=>{
-    const q = parseInt(inp.value)||0; if(q>0) use.push({compId: inp.getAttribute('data-comp'), qty:q})
-  })
-  if(use.length===0){alert('Select at least one component'); return}
-  // check availability
-  for(const u of use){ const c = findComp(u.compId); if(!c){alert('Component missing'); return} if(c.qtyOnHand < u.qty){alert(`Not enough ${c.name} on hand (need ${u.qty}, have ${c.qtyOnHand})`); return} }
-  // consume components and compute cost
-  let cost = 0
-  for(const u of use){ const c = findComp(u.compId); c.qtyOnHand -= u.qty; cost += c.unitCost * u.qty }
-  // add PC entry
-  let pc = {id:id(),name,cost,qty:1,components:use}
-  state.pcs.push(pc)
-  save();
-  document.getElementById('pc-name').value=''
-  document.getElementById('pc-builder-area').style.display='none'
-})
+    $('#addComboRow').addEventListener('click', ()=>{
+      $('#comboItems').appendChild(comboRowTemplate());
+    });
+    // initialize with two rows as a hint
+    $('#comboItems').appendChild(comboRowTemplate());
+    $('#comboItems').appendChild(comboRowTemplate());
 
-// sale type change
-document.getElementById('sale-type').addEventListener('change', populateSaleItemSelect)
+    $('#comboForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const name = $('#comboName').value.trim();
+      const price = parseFloat($('#comboPrice').value||'0');
+      const date = $('#comboDate').value || new Date().toISOString().slice(0,10);
+      const items = Array.from($('#comboItems').children).map(r=>({
+        category: r.querySelector('.combo-cat').value,
+        brand: r.querySelector('.combo-brand').value.trim(),
+        model: r.querySelector('.combo-model').value.trim(),
+      })).filter(x=>x.brand||x.model);
+      if (!items.length) { alert('Please add at least one combo item.'); return; }
+      const comboId = uid();
+      const unit = price / items.length;
+      // Save combo record
+      data.combos.push({ id: comboId, name, price, date, count: items.length });
+      // Create item units from combo, split evenly
+      for (const it of items) {
+        addItemUnits({ ...it, price: unit, onHand: true, date, comboId }, 1);
+      }
+      store.save(data);
+      $('#comboForm').reset();
+      $('#comboItems').innerHTML='';
+      $('#comboItems').appendChild(comboRowTemplate());
+      $('#comboItems').appendChild(comboRowTemplate());
+      renderCombos(); renderItems(); recalcKPIs(); renderRecent(); refreshBuildPicker();
+    });
 
-// record sale
-document.getElementById('record-sale').addEventListener('click', ()=>{
-  const type = document.getElementById('sale-type').value
-  const itemId = document.getElementById('sale-item').value
-  const qty = parseInt(document.getElementById('sale-qty').value) || 0
-  const priceEach = parseFloat(document.getElementById('sale-price').value) || 0
-  if(!itemId || qty<=0 || priceEach<=0){alert('Select an item, quantity and sale price'); return}
+    function renderCombos(){
+      $('#combosTable').innerHTML = data.combos.map(c=>`<tr>
+        <td>${escapeHtml(c.name)}</td>
+        <td>${c.count}</td>
+        <td>${fmt(c.price)}</td>
+        <td>${escapeHtml(c.date||'-')}</td>
+        <td><button class="btn danger" onclick="deleteCombo('${c.id}')">Delete</button></td>
+      </tr>`).join('') || '<tr><td colspan="5">No combos</td></tr>';
+    }
+    function deleteCombo(id){
+      // Only allow delete if no items from this combo are in builds
+      const inUse = data.items.filter(i=>i.comboId===id && i.usedInBuildId).length>0;
+      if (inUse) { alert('Cannot delete combo: one or more items are used in a build.'); return; }
+      // Remove items that came from this combo
+      data.items = data.items.filter(i=>i.comboId!==id);
+      // Remove combo record
+      data.combos = data.combos.filter(c=>c.id!==id);
+      store.save(data); renderCombos(); renderItems(); recalcKPIs(); renderRecent(); refreshBuildPicker();
+    }
 
-  if(type==='component'){
-    const comp = findComp(itemId)
-    if(!comp){alert('Component not found'); return}
-    if(comp.qtyOnHand < qty){alert('Not enough stock to sell'); return}
-    const revenue = qty * priceEach
-    const costBasis = qty * comp.unitCost
-    const profit = revenue - costBasis
-    comp.qtyOnHand -= qty
-    state.sales.push({id:id(),date:Date.now(),type:'component',itemName:comp.name,qty,revenue,profit})
-    save();
-  } else if(type==='pc'){
-    const pc = state.pcs.find(p=>p.id===itemId)
-    if(!pc){alert('PC not found'); return}
-    if(pc.qty < qty){alert('Not enough PC stock'); return}
-    const revenue = qty * priceEach
-    const costBasis = qty * pc.cost
-    const profit = revenue - costBasis
-    pc.qty -= qty
-    state.sales.push({id:id(),date:Date.now(),type:'pc',itemName:pc.name,qty,revenue,profit})
-    save();
-  } else if(type==='combo'){
-    const cb = state.combos.find(c=>c.id===itemId)
-    if(!cb){alert('Combo not found'); return}
-    // check component availability
-    for(const it of cb.items){ const c = findComp(it.compId); if(!c || c.qtyOnHand < it.qty*qty){alert('Not enough components for combo'); return} }
-    let costBasis = 0
-    for(const it of cb.items){ const c = findComp(it.compId); c.qtyOnHand -= it.qty*qty; costBasis += c.unitCost * it.qty*qty }
-    const revenue = qty * priceEach
-    const profit = revenue - costBasis
-    state.sales.push({id:id(),date:Date.now(),type:'combo',itemName:cb.name,qty,revenue,profit})
-    save();
-  }
-  // clear sale inputs
-  document.getElementById('sale-qty').value='1'; document.getElementById('sale-price').value=''
-})
+    // --------------------------
+    // Build PCs Page
+    // --------------------------
+    const categories = ['CPU','Motherboard','GPU','RAM','Storage','PSU','Case','Cooler','Other'];
 
-// sell combo quick action in combos table
-document.querySelector('#combos-table tbody').addEventListener('click',(e)=>{
-  const btn = e.target.closest('button'); if(!btn) return
-  const idd = btn.getAttribute('data-id'); const act = btn.getAttribute('data-act')
-  if(act==='sell-combo'){
-    const cb = state.combos.find(c=>c.id===idd)
-    if(!cb) return; const price = cb.price
-    // quick sell 1 at combo price
-    // check availability
-    for(const it of cb.items){ const c = findComp(it.compId); if(!c || c.qtyOnHand < it.qty){alert('Not enough components for combo'); return} }
-    let costBasis=0
-    for(const it of cb.items){ const c=findComp(it.compId); c.qtyOnHand -= it.qty; costBasis += c.unitCost * it.qty }
-    const revenue = price
-    const profit = revenue - costBasis
-    state.sales.push({id:id(),date:Date.now(),type:'combo',itemName:cb.name,qty:1,revenue,profit}); save()
-  }
-})
+    function refreshBuildPicker() {
+      const wrap = $('#buildPicker');
+      wrap.innerHTML = '';
+      for (const cat of categories) {
+        const section = document.createElement('div');
+        section.style.marginBottom='10px';
+        const label = document.createElement('label');
+        label.textContent = cat;
+        const select = document.createElement('select');
+        select.dataset.category = cat;
+        select.multiple = ['RAM','Storage','Other'].includes(cat); // allow multiples
+        select.size = 4;
+        select.style.width='100%';
+        const opts = data.items.filter(i=>i.onHand && !i.usedInBuildId && i.category===cat);
+        for (const it of opts) {
+          const o = document.createElement('option');
+          o.value = it.id; o.textContent = `${it.brand||''} ${it.model||''} — ${fmt(it.price)}`.trim();
+          select.appendChild(o);
+        }
+        section.appendChild(label); section.appendChild(select);
+        wrap.appendChild(section);
+      }
+    }
 
-// initial load
-load()
+    $('#buildForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const name = $('#buildName').value.trim();
+      const chosen = [];
+      $$('#buildPicker select').forEach(sel=>{
+        Array.from(sel.selectedOptions).forEach(o=> chosen.push(o.value));
+      });
+      if (!chosen.length) { alert('Select at least one component.'); return; }
+      const parts = data.items.filter(i=> chosen.includes(i.id));
+      const cost = parts.reduce((s,i)=>s+i.price,0);
+      const id = uid();
+      data.builds.push({ id, name, parts: parts.map(p=>p.id), cost, sold:false, dateBuilt: new Date().toISOString().slice(0,10) });
+      // Mark items as not on hand and link to build
+      for (const p of parts) { p.onHand=false; p.usedInBuildId=id; }
+      store.save(data);
+      $('#buildForm').reset();
+      refreshBuildPicker(); renderBuilds(); recalcKPIs(); renderRecent(); renderItems(); fillSellBuilds();
+    });
 
-</script>
+    function renderBuilds(){
+      const f = $('#buildFilter').value;
+      let rows = data.builds;
+      if (f==='sold') rows = rows.filter(b=>b.sold);
+      if (f==='unsold') rows = rows.filter(b=>!b.sold);
+      rows = [...rows].sort((a,b)=> (b.dateBuilt||'').localeCompare(a.dateBuilt||''));
+      $('#buildsTable').innerHTML = rows.map(b=>{
+        const parts = b.parts.map(id=> data.items.find(i=>i.id===id)).filter(Boolean);
+        return `<tr>
+          <td>${escapeHtml(b.name)}</td>
+          <td>${parts.length}</td>
+          <td>${fmt(b.cost)}</td>
+          <td>${b.sold?'<span class="pill red">Sold</span>':'<span class="pill green">Unsold</span>'}</td>
+          <td class="row">
+            <button class="btn" onclick="viewBuild('${b.id}')">View</button>
+            ${b.sold? '' : `<button class="btn warn" onclick="dismantleBuild('${b.id}')">Dismantle</button>`}
+            <button class="btn danger" onclick="deleteBuild('${b.id}')">Delete</button>
+          </td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="5">No builds</td></tr>';
+    }
+
+    function viewBuild(id){
+      const b = data.builds.find(x=>x.id===id); if(!b) return;
+      const parts = b.parts.map(pid=> data.items.find(i=>i.id===pid)).filter(Boolean);
+      alert(`${b.name}\n\nParts:\n- ${parts.map(p=>`${p.category}: ${p.brand||''} ${p.model||''} (${fmt(p.price)})`).join('\n- ')}\n\nCost: ${fmt(b.cost)}\nStatus: ${b.sold?'Sold':'Unsold'}`);
+    }
+    function dismantleBuild(id){
+      const b = data.builds.find(x=>x.id===id); if(!b || b.sold) { alert('Cannot dismantle a sold build.'); return; }
+      for (const pid of b.parts) {
+        const it = data.items.find(i=>i.id===pid); if(it){ it.onHand=true; it.usedInBuildId=null; }
+      }
+      data.builds = data.builds.filter(x=>x.id!==id);
+      store.save(data); renderBuilds(); recalcKPIs(); refreshBuildPicker(); renderItems(); renderRecent(); fillSellBuilds();
+    }
+    function deleteBuild(id){
+      const b = data.builds.find(x=>x.id===id); if(!b) return;
+      if (b.sold) { alert('Cannot delete a sold build.'); return; }
+      // restore items
+      for (const pid of b.parts) {
+        const it = data.items.find(i=>i.id===pid); if(it){ it.onHand=true; it.usedInBuildId=null; }
+      }
+      data.builds = data.builds.filter(x=>x.id!==id);
+      store.save(data); renderBuilds(); recalcKPIs(); refreshBuildPicker(); renderItems(); renderRecent(); fillSellBuilds();
+    }
+
+    $('#buildFilter').addEventListener('change', renderBuilds);
+
+    // --------------------------
+    // Sales Page
+    // --------------------------
+    function fillSellBuilds(){
+      const select = $('#sellBuild');
+      select.innerHTML = '<option value="">Choose build…</option>' + data.builds.filter(b=>!b.sold).map(b=>`<option value="${b.id}">${escapeHtml(b.name)} — Cost ${fmt(b.cost)}</option>`).join('');
+      $('#salesTable').innerHTML = data.sales.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'')).map(s=>`<tr>
+        <td>${escapeHtml(s.name)}</td>
+        <td>${fmt(s.salePrice)}</td>
+        <td>${fmt(s.cost)}</td>
+        <td>${fmt(s.salePrice - s.cost)}</td>
+        <td>${escapeHtml(s.date||'-')}</td>
+      </tr>`).join('') || '<tr><td colspan="5">No sales yet</td></tr>';
+    }
+
+    $('#sellForm').addEventListener('submit',(e)=>{
+      e.preventDefault();
+      const id = $('#sellBuild').value; if(!id){ alert('Select a build'); return; }
+      const b = data.builds.find(x=>x.id===id); if(!b){ alert('Build not found'); return; }
+      const price = parseFloat($('#sellPrice').value||'0');
+      const date = $('#sellDate').value || new Date().toISOString().slice(0,10);
+      b.sold = true; b.salePrice = price; b.dateSold = date;
+      data.sales.push({ id: uid(), buildId: b.id, name: b.name, salePrice: price, cost: b.cost, date });
+      store.save(data);
+      fillSellBuilds(); renderBuilds(); recalcKPIs(); renderRecent();
+      $('#sellForm').reset();
+    });
+
+    // --------------------------
+    // Analytics (Chart)
+    // --------------------------
+    let chart;
+    function monthlyBuckets(monthsBack=12){
+      // returns array of {ym: '2025-08', spent, revenue, profit}
+      const map = new Map();
+      function key(d){ return d.slice(0,7); }
+      const today = new Date();
+      for (let i=0;i<monthsBack;i++){
+        const dt = new Date(today.getFullYear(), today.getMonth()-i, 1);
+        const k = dt.toISOString().slice(0,7);
+        map.set(k,{ym:k, spent:0, revenue:0, profit:0});
+      }
+      for (const it of data.items){ const k = key(it.date||new Date().toISOString()); if(map.has(k)) map.get(k).spent += it.price; }
+      for (const s of data.sales){ const k = key(s.date||new Date().toISOString()); if(map.has(k)) { map.get(k).revenue += s.salePrice; map.get(k).profit += (s.salePrice - s.cost); } }
+      const arr = Array.from(map.values()).sort((a,b)=> a.ym.localeCompare(b.ym));
+      return arr;
+    }
+
+    function drawChart(){
+      const months = parseInt($('#chartRange').value||'12');
+      const dataPoints = monthlyBuckets(months);
+      const labels = dataPoints.map(x=>x.ym);
+      const spent = dataPoints.map(x=>x.spent);
+      const revenue = dataPoints.map(x=>x.revenue);
+      const profit = dataPoints.map(x=>x.profit);
+      const ctx = document.getElementById('moneyChart').getContext('2d');
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [
+          { label: 'Spent', data: spent },
+          { label: 'Revenue', data: revenue },
+          { label: 'Profit', data: profit }
+        ] },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: '#e2e8f0' } } },
+          scales: {
+            x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,.15)' } },
+            y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,.15)' } }
+          }
+        }
+      });
+    }
+
+    $('#chartRange').addEventListener('change', drawChart);
+
+    // --------------------------
+    // Settings
+    // --------------------------
+    $('#currencySymbol').value = data.settings?.currency || '€';
+    $('#localeString').value = data.settings?.locale || 'nl-NL';
+    $('#saveSettings').addEventListener('click', ()=>{
+      data.settings = { currency: $('#currencySymbol').value || '€', locale: $('#localeString').value || 'nl-NL' };
+      store.save(data); recalcKPIs(); renderItems(); renderBuilds(); fillSellBuilds(); drawChart();
+      alert('Settings saved');
+    });
+
+    // --------------------------
+    // Import / Export / Seed / Reset
+    // --------------------------
+    $('#exportBtn').addEventListener('click', ()=> store.export());
+    $('#importFile').addEventListener('change', (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      const reader = new FileReader(); reader.onload = ()=>{ try { data = JSON.parse(reader.result); store.save(data); init(); alert('Imported!'); } catch { alert('Invalid JSON'); } }; reader.readAsText(file);
+    });
+
+    $('#seedBtn').addEventListener('click', ()=>{
+      if(!confirm('Seed demo data? This adds to your current data.')) return;
+      const today = new Date();
+      addItemUnits({ category:'CPU', brand:'AMD', model:'Ryzen 5 5600', price:85, onHand:true, date: new Date(today.getFullYear(), today.getMonth(), 3).toISOString().slice(0,10) }, 1);
+      addItemUnits({ category:'Motherboard', brand:'MSI', model:'B550 A-Pro', price:70, onHand:true, date: new Date(today.getFullYear(), today.getMonth(), 3).toISOString().slice(0,10) }, 1);
+      addItemUnits({ category:'GPU', brand:'Sapphire', model:'RX 6650 XT', price:150, onHand:true, date: new Date(today.getFullYear(), today.getMonth(), 5).toISOString().slice(0,10) }, 1);
+      addItemUnits({ category:'RAM', brand:'Corsair', model:'Vengeance 16GB', price:30, onHand:true, date: new Date(today.getFullYear(), today.getMonth(), 6).toISOString().slice(0,10) }, 2);
+      addItemUnits({ category:'Storage', brand:'Samsung', model:'970 EVO 1TB', price:50, onHand:true, date: new Date(today.getFullYear(), today.getMonth(), 7).toISOString().slice(0,10) }, 1);
+      addItemUnits({ category:'PSU', brand:'Corsair', model:'RM650', price:45, onHand:true, date: new Date(today.getFullYear(), today.getMonth(), 7).toISOString().slice(0,10) }, 1);
+      addItemUnits({ category:'Case', brand:'NZXT', model:'H510', price:35, onHand:true, date: new Date(today.getFullYear(), today.getMonth(), 8).toISOString().slice(0,10) }, 1);
+      store.save(data);
+      // Build one
+      const cpu = data.items.find(i=>i.category==='CPU' && i.onHand);
+      const mb = data.items.find(i=>i.category==='Motherboard' && i.onHand);
+      const gpu = data.items.find(i=>i.category==='GPU' && i.onHand);
+      const ram = data.items.filter(i=>i.category==='RAM' && i.onHand).slice(0,2);
+      const ssd = data.items.find(i=>i.category==='Storage' && i.onHand);
+      const psu = data.items.find(i=>i.category==='PSU' && i.onHand);
+      const cs = data.items.find(i=>i.category==='Case' && i.onHand);
+      const parts = [cpu, mb, gpu, ...ram, ssd, psu, cs].filter(Boolean);
+      const cost = parts.reduce((s,i)=>s+i.price,0);
+      const id = uid();
+      data.builds.push({ id, name:'Demo Build 1', parts: parts.map(p=>p.id), cost, sold:false, dateBuilt: new Date().toISOString().slice(0,10) });
+      for (const p of parts){ p.onHand=false; p.usedInBuildId=id; }
+      // Sell it
+      const salePrice = cost + 120;
+      const dateSold = new Date(today.getFullYear(), today.getMonth(), 10).toISOString().slice(0,10);
+      const b = data.builds.find(x=>x.id===id);
+      b.sold = true; b.salePrice = salePrice; b.dateSold = dateSold;
+      data.sales.push({ id: uid(), buildId: id, name: b.name, salePrice, cost, date: dateSold });
+      store.save(data);
+      init(); alert('Demo data added!');
+    });
+
+    $('#resetBtn').addEventListener('click', ()=>{
+      if (!confirm('This will erase all your data. Continue?')) return;
+      data = { items: [], combos: [], builds: [], sales: [], settings: { currency: '€', locale: 'nl-NL' } };
+      store.save(data); init();
+    });
+
+    // --------------------------
+    // Boot
+    // --------------------------
+    function init(){
+      // Tabs default to dashboard
+      $$('.tab-btn').forEach(b=>{ b.classList.toggle('active', b.dataset.tab==='dashboard'); });
+      $$('.tab').forEach(s=> s.hidden = s.id!=='dashboard');
+      recalcKPIs(); renderRecent(); renderItems(); renderCombos(); refreshBuildPicker(); renderBuilds(); fillSellBuilds();
+    }
+
+    init();
+  </script>
 </body>
 </html>
